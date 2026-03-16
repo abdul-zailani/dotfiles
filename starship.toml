@@ -1,0 +1,147 @@
+# Catppuccin Macchiato Starship Theme (Bubble Style)
+# A high-contrast, beautiful pastel theme
+
+# 1. Palette Definition
+palette = "catppuccin_macchiato"
+
+# 2. Format Structure
+format = """
+$os\
+$directory\
+$git_branch\
+$git_status\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$python\
+$docker_context\
+$kubernetes\
+$terraform\
+$aws\
+$fill\
+$cmd_duration\
+$line_break\
+$character"""
+
+# 3. Module Configurations
+
+# 3. Module Configurations
+
+[os]
+disabled = true
+
+[directory]
+style = "fg:#24273A bg:#8AADF4"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+read_only = " ro"
+
+[directory.substitutions]
+
+[git_branch]
+symbol = ""
+style = "bg:#F5BDE6"
+format = '[[ $branch ](fg:#24273A bg:#F5BDE6)]($style)'
+
+[git_status]
+style = "bg:#F5BDE6"
+format = '[[($all_status$ahead_behind )](fg:#24273A bg:#F5BDE6)]($style)'
+
+[nodejs]
+symbol = "node "
+style = "bg:#A6DA95"
+format = '[[ $symbol($version) ](fg:#24273A bg:#A6DA95)]($style)'
+
+[golang]
+symbol = "go "
+style = "bg:#8BD5CA"
+format = '[[ $symbol($version) ](fg:#24273A bg:#8BD5CA)]($style)'
+
+[python]
+symbol = "py "
+style = "bg:#F5A97F"
+format = '[[ $symbol($version) (\($virtualenv\) )](fg:#24273A bg:#F5A97F)]($style)'
+
+[php]
+symbol = "php "
+style = "bg:#8AADF4"
+format = '[[ $symbol($version) ](fg:#24273A bg:#8AADF4)]($style)'
+
+[java]
+symbol = "java "
+style = "bg:#ED8796"
+format = '[[ $symbol($version) ](fg:#24273A bg:#ED8796)]($style)'
+
+[rust]
+symbol = "rs "
+style = "bg:#F5A97F"
+format = '[[ $symbol($version) ](fg:#24273A bg:#F5A97F)]($style)'
+
+[docker_context]
+symbol = "docker "
+style = "bg:#8AADF4"
+format = '[[ $symbol$context ](fg:#24273A bg:#8AADF4)]($style)'
+
+[kubernetes]
+disabled = false
+symbol = "k8s "
+style = "bg:#C6A0F6"
+format = '[[ $symbol$context( \($namespace\)) ](fg:#24273A bg:#C6A0F6)]($style)'
+
+[terraform]
+symbol = "tf "
+style = "bg:#F5A97F"
+format = '[[ $symbol$workspace ](fg:#24273A bg:#F5A97F)]($style)'
+
+[aws]
+symbol = "aws "
+style = "bg:#F5A97F"
+format = '[[ $symbol($profile )(\($region\) )](fg:#24273A bg:#F5A97F)]($style)'
+
+[cmd_duration]
+min_time = 2000
+format = " [took $duration](bold yellow)"
+
+[line_break]
+disabled = false
+
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
+vicmd_symbol = "[❮](bold yellow)"
+
+[fill]
+symbol = " "
+
+# 4. Palette Colors (Catppuccin Macchiato)
+[palettes.catppuccin_macchiato]
+rosewater = "#F4DBD6"
+flamingo = "#F0C6C6"
+pink = "#F5BDE6"
+mauve = "#C6A0F6"
+red = "#ED8796"
+maroon = "#EE99A0"
+peach = "#F5A97F"
+yellow = "#EED49F"
+green = "#A6DA95"
+teal = "#8BD5CA"
+sky = "#91D7E3"
+sapphire = "#7DC4E4"
+blue = "#8AADF4"
+lavender = "#B7BDF8"
+text = "#CAD3F5"
+subtext1 = "#B8C0E0"
+subtext0 = "#A5ADCB"
+overlay2 = "#9399B2"
+overlay1 = "#8087A2"
+overlay0 = "#6E738D"
+surface2 = "#5B6078"
+surface1 = "#494D64"
+surface0 = "#363A4F"
+base = "#24273A"
+mantle = "#1E2030"
+crust = "#181926"

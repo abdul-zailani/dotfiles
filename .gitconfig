@@ -1,0 +1,28 @@
+[user]
+	# Set per machine via: git config --global user.name "Your Name"
+	# Set per machine via: git config --global user.email "your@email.com"
+[core]
+	excludesfile = ~/.gitignore_global
+	pager = delta
+[init]
+	defaultBranch = main
+[interactive]
+	diffFilter = delta --color-only
+[pull]
+	rebase = true
+[delta]
+	navigate = true
+	side-by-side = true
+	line-numbers = true
+[merge]
+	conflictstyle = diff3
+[diff]
+	colorMoved = default
+[alias]
+	st = status
+	co = checkout
+	br = branch
+	ci = commit
+	lg = log --oneline --graph --decorate -20
+	unstage = reset HEAD --
+	last = log -1 HEAD

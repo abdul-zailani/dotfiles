@@ -1,0 +1,16 @@
+# Secrets — NEVER commit
+.zshrc.local
+*.secret
+*.pem
+*.key
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~

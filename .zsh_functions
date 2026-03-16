@@ -1,0 +1,331 @@
+# ~/.zsh_functions — Additional functions for macOS
+
+# ----------[ macOS System Functions ]----------
+macinfo() {
+  echo "=== macOS System Information ==="
+  echo "Product: $(sw_vers -productName) $(sw_vers -productVersion)"
+  echo "Build: $(sw_vers -buildVersion)"
+  echo "Kernel: $(uname -r)"
+  echo "Architecture: $(uname -m)"
+  echo "Hostname: $(hostname)"
+  echo "Uptime: $(uptime | awk '{print $3,$4}' | sed 's/,//')"
+  echo "Shell: $SHELL"
+  echo "Terminal: $TERM_PROGRAM"
+  echo "User: $(whoami)"
+  echo "Home: $HOME"
+}
+
+diskspace() {
+  echo "=== Disk Space ==="
+  df -h | grep -E '^/dev/' | awk '{print $1, $2, $3, $4, $5, $6}'
+  echo ""
+  echo "=== Home Directory ==="
+  du -sh ~/Documents ~/Downloads ~/Desktop ~/Pictures ~/Music ~/Movies 2>/dev/null
+}
+
+netstatus() {
+  echo "=== Network Status ==="
+  echo "WiFi: $(networksetup -getairportpower en0 | awk '{print $4}')"
+  echo "IP: $(ipconfig getifaddr en0)"
+  echo "External IP: $(curl -s https://ipinfo.io/ip)"
+  echo "DNS: $(scutil --dns | grep 'nameserver\[0\]' | head -1 | awk '{print $3}')"
+}
+
+brewstatus() {
+  if command -v brew > /dev/null; then
+    echo "=== Homebrew Status ==="
+    local outdated=$(brew outdated | wc -l | tr -d ' ')
+    local packages=$(brew list | wc -l | tr -d ' ')
+    echo "Installed packages: $packages"
+    if [ "$outdated" -gt 0 ]; then
+      echo "Outdated packages: $outdated"
+      echo "Run 'bup' to update"
+    else
+      echo "All packages are up to date"
+    fi
+  else
+    echo "Homebrew not installed"
+  fi
+}
+
+# ----------[ Development Functions ]----------
+setup_project() {
+  local project_name=$1
+  local project_type=${2:-"general"}
+
+  if [ -z "$project_name" ]; then
+    echo "Usage: setup_project <name> [type]"
+    echo "Types: general, web, mobile, backend, python, node, go"
+    return 1
+  fi
+
+  local project_path="$HOME/Documents/workspace/$project_name"
+
+  if [ -d "$project_path" ]; then
+    echo "Project already exists: $project_path"
+    return 1
+  fi
+
+  mkdir -p "$project_path"
+  cd "$project_path"
+
+  echo "# $project_name" > README.md
+
+  case $project_type in
+    "python")
+      python3 -m venv venv
+      echo "venv/" > .gitignore
+      ;;
+    "node")
+      npm init -y
+      echo "node_modules/" > .gitignore
+      ;;
+    "go")
+      go mod init "$project_name"
+      ;;
+  esac
+
+  git init
+  echo "$project_type project '$project_name' created at $project_path"
+}
+
+docker_cleanup() {
+  echo "=== Docker Cleanup ==="
+  echo "Stopping all containers..."
+  docker stop $(docker ps -q) 2>/dev/null || echo "No running containers"
+  docker container prune -f
+  docker image prune -f
+  docker volume prune -f
+  docker network prune -f
+  echo "Docker cleanup completed!"
+}
+
+# ----------[ Utility Functions ]----------
+search_files() {
+  local query=$1
+  local dir=${2:-.}
+
+  if [ -z "$query" ]; then
+    echo "Usage: search_files <query> [directory]"
+    return 1
+  fi
+
+  if command -v rg > /dev/null; then
+    rg -n "$query" "$dir" | head -20
+  else
+    grep -r -n "$query" "$dir" 2>/dev/null | head -20
+  fi
+}
+
+tree_view() {
+  local dir=${1:-.}
+  local depth=${2:-3}
+
+  if command -v tree > /dev/null; then
+    tree -L "$depth" "$dir"
+  elif command -v eza > /dev/null; then
+    eza -T --level="$depth" "$dir"
+  else
+    find "$dir" -maxdepth "$depth" -type d | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
+  fi
+}
+
+quick_backup() {
+  local source=$1
+  local backup_dir="$HOME/Backups/$(date +%Y%m%d)"
+
+  if [ -z "$source" ]; then
+    echo "Usage: quick_backup <source>"
+    return 1
+  fi
+
+  if [ ! -e "$source" ]; then
+    echo "Source does not exist: $source"
+    return 1
+  fi
+
+  mkdir -p "$backup_dir"
+  local backup_name="$(basename "$source")_$(date +%H%M%S)"
+
+  if cp -r "$source" "$backup_dir/$backup_name"; then
+    echo "Backup created: $backup_dir/$backup_name"
+  else
+    echo "Backup failed"
+    return 1
+  fi
+}
+
+# ----------[ macOS Specific Functions ]----------
+spotlight_search() {
+  local query="$*"
+  if [ -z "$query" ]; then
+    echo "Usage: spotlight_search <search term>"
+    return 1
+  fi
+  mdfind "$query" | head -20
+}
+
+launch_app() {
+  local app_name="$*"
+  if [ -z "$app_name" ]; then
+    echo "Usage: launch_app <app name>"
+    return 1
+  fi
+  if open -a "$app_name" >/dev/null 2>&1; then
+    echo "Launched: $app_name"
+  else
+    echo "Failed to launch: $app_name"
+    return 1
+  fi
+}
+
+# ----------[ Navigation & Utilities ]----------
+mkcd() {
+  mkdir -p "$1" && cd "$1"
+}
+
+extract() {
+  if [ -f $1 ]; then
+    case $1 in
+      *.tar.bz2)   tar xjf $1     ;;
+      *.tar.gz)    tar xzf $1     ;;
+      *.bz2)       bunzip2 $1     ;;
+      *.rar)       unrar e $1     ;;
+      *.gz)        gunzip $1      ;;
+      *.tar)       tar xf $1      ;;
+      *.tbz2)      tar xjf $1     ;;
+      *.tgz)       tar xzf $1     ;;
+      *.zip)       unzip $1       ;;
+      *.Z)         uncompress $1  ;;
+      *.7z)        7z x $1        ;;
+      *)           echo "'$1' cannot be extracted via extract()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
+
+cleanup() {
+  echo "🧹 Cleaning system caches..."
+  [ -d ~/.cache/uv ] && rm -rf ~/.cache/uv && echo "  ✓ uv cache"
+  [ -d ~/.npm/_cacache ] && rm -rf ~/.npm/_cacache && echo "  ✓ npm cache"
+  command -v brew >/dev/null && brew cleanup -s 2>/dev/null && echo "  ✓ homebrew"
+  rm -rf ~/Library/Caches/go-build ~/Library/Caches/goimports ~/Library/Caches/gopls 2>/dev/null && echo "  ✓ go caches"
+  rm -rf ~/Library/Caches/electron ~/Library/Caches/typescript ~/Library/Caches/pnpm 2>/dev/null && echo "  ✓ dev caches"
+  rm -rf ~/Library/Caches/com.openai.atlas ~/Library/Caches/Google ~/Library/Caches/Trae 2>/dev/null && echo "  ✓ app caches"
+  echo "\n✅ Cleanup complete!"
+  df -h / | tail -1 | awk '{print "💾 Available: " $4}'
+}
+
+# ----------[ MFA Tools ]----------
+unalias mfa 2>/dev/null
+
+mfa() {
+  local cmd="${1:-}"
+  local account="${2:-}"
+  local secret="${3:-}"
+
+  _mfa_list_accounts() {
+    security dump-keychain | grep -o '"mfa-[^"]*"' | sed 's/"mfa-//;s/"//' | sort -u
+  }
+
+  _mfa_generate() {
+    local acc="$1"
+    local sec
+    sec=$(security find-generic-password -a "$USER" -s "mfa-${acc}" -w 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+      echo "Error: 'mfa-${acc}' not found in Keychain"
+      return 1
+    fi
+    oathtool --totp -b "$sec"
+  }
+
+  case "$cmd" in
+    ls|list)
+      local accounts=$(_mfa_list_accounts)
+      [[ -z "$accounts" ]] && { echo "No MFA accounts found."; return 0 }
+      echo "MFA Accounts:\n─────────────"
+      while IFS= read -r acc; do
+        local code=$(_mfa_generate "$acc" 2>/dev/null)
+        printf "  %-20s %s\n" "$acc" "$code"
+      done <<< "$accounts"
+      ;;
+    add)
+      if [[ -z "$account" || -z "$secret" ]]; then
+        echo "Usage: mfa add <name> <secret>"; return 1
+      fi
+      security add-generic-password -a "$USER" -s "mfa-${account}" -w "$secret" 2>/dev/null
+      if [[ $? -eq 0 ]]; then
+        echo "Added: $account"
+      else
+        security delete-generic-password -a "$USER" -s "mfa-${account}" >/dev/null 2>&1
+        security add-generic-password -a "$USER" -s "mfa-${account}" -w "$secret"
+        echo "Updated: $account"
+      fi
+      ;;
+    rm|remove)
+      if [[ -z "$account" ]]; then echo "Usage: mfa rm <name>"; return 1; fi
+      security delete-generic-password -a "$USER" -s "mfa-${account}" >/dev/null 2>&1
+      echo "Removed: $account"
+      ;;
+    "")
+      local accounts=$(_mfa_list_accounts)
+      [[ -z "$accounts" ]] && { echo "No MFA accounts found."; return 0 }
+      while IFS= read -r acc; do
+        local code=$(_mfa_generate "$acc" 2>/dev/null)
+        printf "%-20s %s\n" "$acc" "$code"
+      done <<< "$accounts"
+      ;;
+    *)
+      _mfa_generate "$cmd"
+      ;;
+  esac
+}
+
+mfac() {
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "❌ Error: fzf is required for this function."
+    return 1
+  fi
+  local account
+  account=$(mfa ls | awk 'NR>2 {print $1}' | fzf --height 15 --reverse --prompt="🔑 Select MFA Account: ")
+  if [[ -n "$account" ]]; then
+    local code=$(mfa "$account")
+    if [[ -n "$code" ]]; then
+      echo -n "$code" | pbcopy
+      echo "✅ Code for $account copied to clipboard: $code"
+    else
+      echo "❌ Error generating code for $account"
+    fi
+  fi
+}
+
+# Zsh Completion for mfa
+_mfa_completion() {
+  local -a subcommands
+  subcommands=(
+    'ls:List all accounts'
+    'list:List all accounts'
+    'add:Add new account (name secret)'
+    'rm:Remove account'
+    'remove:Remove account'
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe -t subcommands 'mfa subcommand/account' subcommands
+    local -a accounts
+    accounts=($(mfa ls 2>/dev/null | awk 'NR>2 {print $1}'))
+    _describe -t accounts 'mfa accounts' accounts
+  elif (( CURRENT == 3 )); then
+    case $words[2] in
+      rm|remove)
+        local -a accounts
+        accounts=($(mfa ls 2>/dev/null | awk 'NR>2 {print $1}'))
+        _describe -t accounts 'mfa accounts' accounts
+        ;;
+    esac
+  fi
+}
+
+compdef _mfa_completion mfa
+compdef _mfa_completion m

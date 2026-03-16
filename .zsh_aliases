@@ -1,0 +1,84 @@
+# ~/.zsh_aliases — Additional aliases for macOS
+# NOTE: Navigation (../.../~/-), safety (rm/cp/mv), and core git/docker/k8s
+#       aliases are defined in .zshrc — DO NOT duplicate here.
+
+# ----------[ macOS System ]----------
+alias showfiles="defaults write com.apple.finder AppleShowAllFiles YES; killall Finder"
+alias hidefiles="defaults write com.apple.finder AppleShowAllFiles NO; killall Finder"
+alias cleanup_ds="\find . -type f -name '*.DS_Store' -ls -delete"
+alias flushdns="sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder"
+alias emptytrash="osascript -e 'tell application \"Finder\" to empty trash' && echo '✅ Trash emptied!'"
+
+# Network utilities
+alias myip="curl -s https://ipinfo.io/ip"
+alias localip="ipconfig getifaddr en0"
+alias ports="netstat -an | \grep LISTEN"
+
+# System monitoring
+alias cpu="top -l 1 | head -10 | \grep CPU"
+alias mem="top -l 1 | head -10 | \grep PhysMem"
+alias disk="df -h | \grep -E '^/dev/'"
+
+# ----------[ Development Tools ]----------
+# Homebrew
+alias bup="brew update && brew upgrade"
+alias bout="brew outdated"
+alias bclean="brew cleanup"
+alias bdoctor="brew doctor"
+
+# Git (extended — base aliases in .zshrc)
+alias gaa="git add --all"
+alias gcam="git commit -am"
+alias gstp="git stash pop"
+alias gstl="git stash list"
+alias gundo="git reset --soft HEAD~1"
+
+# Docker (extended — base aliases in .zshrc)
+alias dstop="docker stop \$(docker ps -q)"
+alias drm="docker rm \$(docker ps -aq)"
+alias drmi="docker rmi \$(docker images -q)"
+alias dclean="docker system prune -f"
+
+# Kubernetes (extended — base aliases in .zshrc & .cursor/aliases.zsh)
+alias kctx="kubectl config current-context"
+alias kctxs="kubectl config get-contexts"
+alias kswitch="kubectl config use-context"
+alias kport="kubectl port-forward"
+
+# ----------[ Productivity ]----------
+# Directory jumps
+alias desk="cd ~/Desktop"
+alias docs="cd ~/Documents"
+alias dl="cd ~/Downloads"
+alias pics="cd ~/Pictures"
+alias music="cd ~/Music"
+alias movies="cd ~/Movies"
+alias ws="cd ~/Documents/workspace"
+alias wslist="ls -la ~/Documents/workspace/"
+
+# File operations
+alias cpwd="pwd | pbcopy"
+alias path="echo \$PATH | tr ':' '\n'"
+alias hosts="sudo nano /etc/hosts"
+
+# ----------[ macOS Apps ]----------
+alias chrome="open -a 'Google Chrome'"
+alias safari="open -a Safari"
+alias finder="open -a Finder"
+alias mail="open -a Mail"
+alias notes="open -a Notes"
+alias calendar="open -a Calendar"
+
+# ----------[ System Maintenance ]----------
+alias maintenance="sudo periodic daily weekly monthly"
+alias devclean="echo '🧹 Cleaning dev caches...' && go clean -cache 2>/dev/null; brew cleanup --prune=all 2>/dev/null; pnpm store prune 2>/dev/null; python3 -m pip cache purge 2>/dev/null; echo '✅ Dev caches cleaned!'"
+alias cachesize="du -sh ~/Library/Caches 2>/dev/null && echo '---Top 10---' && du -sh ~/Library/Caches/* 2>/dev/null | sort -hr | head -10"
+
+# ----------[ Network and Security ]----------
+alias checkfirewall="sudo /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate"
+alias checkupdates="softwareupdate -l"
+alias installupdates="sudo softwareupdate -i -a"
+alias pingtest="ping -c 5 8.8.8.8"
+
+# ----------[ Shorthand ]----------
+alias m="mfa"
