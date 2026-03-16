@@ -3,11 +3,18 @@
 # │         catppuccin macchiato             │
 # ╰──────────────────────────────────────────╯
 
+# ── Homebrew (Apple Silicon + Intel) ──────────
+if [[ -f /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
 # ── Path ──────────────────────────────────────
-export PATH="/opt/homebrew/bin:$HOME/.local/bin:$HOME/go/bin:$HOME/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/go/bin:$HOME/bin:$PATH"
 [[ -d /Applications/Docker.app/Contents/Resources/bin ]] && export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
 [[ -d "$HOME/.orbstack/bin" ]] && export PATH="$HOME/.orbstack/bin:$PATH"
-[[ -d "/opt/homebrew/opt/mysql-client/bin" ]] && export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
+[[ -n "$HOMEBREW_PREFIX" ]] && [[ -d "$HOMEBREW_PREFIX/opt/mysql-client/bin" ]] && export PATH="$HOMEBREW_PREFIX/opt/mysql-client/bin:$PATH"
 export EDITOR="vim" VISUAL="vim"
 
 # ── History ───────────────────────────────────
@@ -17,7 +24,7 @@ unsetopt IGNORE_EOF BEEP
 
 # ── Completion ────────────────────────────────
 autoload -Uz compinit
-[[ -d "/opt/homebrew/share/zsh/site-functions" ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+[[ -n "$HOMEBREW_PREFIX" ]] && [[ -d "$HOMEBREW_PREFIX/share/zsh/site-functions" ]] && fpath=($HOMEBREW_PREFIX/share/zsh/site-functions $fpath)
 if [[ -n ${HOME}/.zcompdump(#qN.mh+24) ]]; then
   compinit -u -d "${HOME}/.zcompdump"
 else
@@ -66,7 +73,7 @@ export MANPAGER="less -R --use-color -Dd+r -Du+b"
 export MANROFFOPT="-c"
 
 # ── Plugins ───────────────────────────────────
-PLUGIN_DIR="/opt/homebrew/share"
+PLUGIN_DIR="${HOMEBREW_PREFIX:-/opt/homebrew}/share"
 if [[ -d "$PLUGIN_DIR" ]]; then
   [[ -f "$PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && source "$PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
   [[ -f "$PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && source "$PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
