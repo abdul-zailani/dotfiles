@@ -1,0 +1,12 @@
+macOS
+dotfiles
+zsh
+terminal
+catppuccin
+starship
+devops
+kubernetes
+docker
+homebrew
+developer-tools
+shell-configuration

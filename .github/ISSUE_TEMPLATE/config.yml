@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💡 Feature Request or Question
+    url: https://github.com/abdul-zailani/dotfiles/discussions
+    about: Got an idea or question? Start a discussion.
