@@ -1,5 +1,6 @@
 # Secrets — NEVER commit
 .zshrc.local
+.zsh_mfa
 *.secret
 *.pem
 *.key

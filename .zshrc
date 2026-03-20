@@ -1,5 +1,5 @@
 # ╭──────────────────────────────────────────╮
-# │             aziz's zshrc                 │
+# │              zshrc config                │
 # │         catppuccin macchiato             │
 # ╰──────────────────────────────────────────╯
 
@@ -108,9 +108,8 @@ alias kns="kubectl config set-context --current --namespace"
 alias lg='lazygit'
 
 # ── Source Extra Files ────────────────────────
-[[ -f ~/.zsh_aliases ]]        && source ~/.zsh_aliases
-[[ -f ~/.cursor/aliases.zsh ]] && source ~/.cursor/aliases.zsh
-[[ -f ~/.zshrc.local ]]        && source ~/.zshrc.local
+[[ -f ~/.zsh_aliases ]]  && source ~/.zsh_aliases
+[[ -f ~/.zshrc.local ]]  && source ~/.zshrc.local
 
 # ── Key Bindings ──────────────────────────────
 autoload -U up-line-or-beginning-search down-line-or-beginning-search
@@ -144,6 +143,4 @@ fi
 # ── Greeting ──────────────────────────────────
 if type fast_greeting >/dev/null 2>&1; then
   fast_greeting
-elif type personal_greeting >/dev/null 2>&1; then
-  personal_greeting
 fi

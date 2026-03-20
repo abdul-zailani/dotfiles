@@ -62,7 +62,15 @@ if [ ! -f "$HOME/.zshrc.local" ]; then
     info "Created ~/.zshrc.local for local overrides"
 fi
 
-# ── 6. Set default shell ─────────────────────
+# ── 6. Optional extras ───────────────────────
+if [ -f "$DOTFILES/extras/zsh_mfa" ] && [ ! -f "$HOME/.zsh_mfa" ]; then
+    read -p "Enable MFA/TOTP tools? (requires oath-toolkit) [y/N] " enable_mfa
+    if [[ "$enable_mfa" =~ ^[Yy]$ ]]; then
+        link_file "$DOTFILES/extras/zsh_mfa" "$HOME/.zsh_mfa"
+    fi
+fi
+
+# ── 7. Set default shell ─────────────────────
 if [ "$SHELL" != "/bin/zsh" ]; then
     chsh -s /bin/zsh
     info "Default shell set to zsh"

@@ -1,6 +1,6 @@
 # 🏠 dotfiles
 
-> Personal dev environment — one command setup, works on any Mac.
+> macOS dev environment — one command setup, works on any Mac.
 
 ![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
 ![Zsh](https://img.shields.io/badge/Zsh-F15A24?style=flat&logo=zsh&logoColor=white)
@@ -11,7 +11,7 @@
 ## ⚡ Quick Start
 
 ```bash
-git clone git@github.com:abdul-zailani/dotfiles.git ~/dotfiles
+git clone https://github.com/abdul-zailani/dotfiles.git ~/dotfiles
 cd ~/dotfiles && ./setup.sh
 ```
 
@@ -33,6 +33,8 @@ cd ~/dotfiles && ./setup.sh
 ├── .gitignore_global   # Global gitignore
 ├── starship.toml       # Starship prompt — Catppuccin Macchiato
 ├── Brewfile            # Homebrew packages
+├── extras/             # Optional modules
+│   └── zsh_mfa         # MFA/TOTP via macOS Keychain
 └── setup.sh            # One-command bootstrap
 ```
 
@@ -49,7 +51,6 @@ Installed via `Brewfile`:
 | [bat](https://github.com/sharkdp/bat) | Better `cat` |
 | [delta](https://github.com/dandavison/delta) | Better git diff |
 | [k9s](https://k9scli.io) | Kubernetes TUI |
-| [lazygit](https://github.com/jesseduffield/lazygit) | Git TUI |
 
 ## ⌨️ Key Aliases
 
@@ -68,7 +69,6 @@ Installed via `Brewfile`:
 | `gaa` | `git add --all` |
 | `gcam` | `git commit -am` |
 | `gundo` | `git reset --soft HEAD~1` |
-| `lg` | `lazygit` |
 
 </details>
 
@@ -120,7 +120,6 @@ Installed via `Brewfile`:
 | Function | Description |
 |----------|-------------|
 | `macinfo` | System info overview |
-| `mfa` / `mfac` | TOTP codes from macOS Keychain |
 | `cleanup` | Clean dev caches (go, npm, brew, etc) |
 | `docker_cleanup` | Prune all Docker resources |
 | `extract <file>` | Extract any archive format |
@@ -130,11 +129,34 @@ Installed via `Brewfile`:
 | `tree_view` | Tree with eza/tree fallback |
 | `quick_backup` | Timestamped backup |
 
+## 🧩 Optional Extras
+
+Extras live in `extras/` and are opt-in. To enable:
+
+```bash
+cp ~/dotfiles/extras/zsh_mfa ~/.zsh_mfa
+```
+
+| Extra | Description |
+|-------|-------------|
+| `zsh_mfa` | TOTP codes from macOS Keychain (requires `oath-toolkit`) |
+
+## 🎨 Customization
+
+Machine-specific config goes in `~/.zshrc.local` (gitignored):
+
+```bash
+# ~/.zshrc.local — examples
+export WORK_API_KEY="..."
+alias vpn="sudo openconnect vpn.company.com"
+alias m="mfa"  # personal shorthand
+source ~/.cursor/aliases.zsh  # editor-specific aliases
+```
+
 ## 🔒 Security
 
-- ✅ **No secrets** in repo — scanned before every push
+- ✅ **No secrets** in repo
 - ✅ **Git identity not hardcoded** — prompted on first `setup.sh` run
-- ✅ **MFA secrets** stored in macOS Keychain, not files
 - ✅ **Machine-specific config** goes in `~/.zshrc.local` (gitignored)
 - ✅ `.gitignore` excludes: `.env`, `*.pem`, `*.key`, `*.secret`
 
@@ -163,12 +185,6 @@ On another machine:
 cd ~/dotfiles && git pull
 ```
 
-## 📁 Machine-Specific Config
+## 📄 License
 
-For stuff that shouldn't be shared (work VPN, local paths, etc):
-
-```bash
-# ~/.zshrc.local (gitignored)
-export WORK_API_KEY="..."
-alias vpn="sudo openconnect vpn.company.com"
-```
+MIT

@@ -1,5 +1,6 @@
 # Core Tools
 brew "git"
+brew "git-delta"
 brew "starship"
 brew "zoxide"
 brew "fzf"
@@ -12,10 +13,13 @@ brew "zsh-syntax-highlighting"
 brew "kubectl"
 brew "k9s"
 
+# Git TUI
+brew "lazygit"
+
 # Fonts
 cask "font-hack-nerd-font"
 
-# Apps (Optional - Uncomment if needed)
+# Apps (Optional — uncomment if needed)
 # cask "visual-studio-code"
 # cask "orbstack"
 # cask "raycast"

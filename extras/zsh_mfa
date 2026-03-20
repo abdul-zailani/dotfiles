@@ -1,0 +1,119 @@
+# MFA Tools — TOTP codes from macOS Keychain
+# Requires: oathtool (brew install oath-toolkit)
+#
+# Usage:
+#   mfa              — Show all codes
+#   mfa <account>    — Show code for specific account
+#   mfa add <n> <s>  — Add account with TOTP secret
+#   mfa rm <name>    — Remove account
+#   mfac             — Interactive select + copy (requires fzf)
+
+unalias mfa 2>/dev/null
+
+mfa() {
+  local cmd="${1:-}"
+  local account="${2:-}"
+  local secret="${3:-}"
+
+  _mfa_list_accounts() {
+    security dump-keychain | grep -o '"mfa-[^"]*"' | sed 's/"mfa-//;s/"//' | sort -u
+  }
+
+  _mfa_generate() {
+    local acc="$1"
+    local sec
+    sec=$(security find-generic-password -a "$USER" -s "mfa-${acc}" -w 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+      echo "Error: 'mfa-${acc}' not found in Keychain"
+      return 1
+    fi
+    oathtool --totp -b "$sec"
+  }
+
+  case "$cmd" in
+    ls|list)
+      local accounts=$(_mfa_list_accounts)
+      [[ -z "$accounts" ]] && { echo "No MFA accounts found."; return 0 }
+      echo "MFA Accounts:\n─────────────"
+      while IFS= read -r acc; do
+        local code=$(_mfa_generate "$acc" 2>/dev/null)
+        printf "  %-20s %s\n" "$acc" "$code"
+      done <<< "$accounts"
+      ;;
+    add)
+      if [[ -z "$account" || -z "$secret" ]]; then
+        echo "Usage: mfa add <name> <secret>"; return 1
+      fi
+      security add-generic-password -a "$USER" -s "mfa-${account}" -w "$secret" 2>/dev/null
+      if [[ $? -eq 0 ]]; then
+        echo "Added: $account"
+      else
+        security delete-generic-password -a "$USER" -s "mfa-${account}" >/dev/null 2>&1
+        security add-generic-password -a "$USER" -s "mfa-${account}" -w "$secret"
+        echo "Updated: $account"
+      fi
+      ;;
+    rm|remove)
+      if [[ -z "$account" ]]; then echo "Usage: mfa rm <name>"; return 1; fi
+      security delete-generic-password -a "$USER" -s "mfa-${account}" >/dev/null 2>&1
+      echo "Removed: $account"
+      ;;
+    "")
+      local accounts=$(_mfa_list_accounts)
+      [[ -z "$accounts" ]] && { echo "No MFA accounts found."; return 0 }
+      while IFS= read -r acc; do
+        local code=$(_mfa_generate "$acc" 2>/dev/null)
+        printf "%-20s %s\n" "$acc" "$code"
+      done <<< "$accounts"
+      ;;
+    *)
+      _mfa_generate "$cmd"
+      ;;
+  esac
+}
+
+mfac() {
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "❌ Error: fzf is required for this function."
+    return 1
+  fi
+  local account
+  account=$(mfa ls | awk 'NR>2 {print $1}' | fzf --height 15 --reverse --prompt="🔑 Select MFA Account: ")
+  if [[ -n "$account" ]]; then
+    local code=$(mfa "$account")
+    if [[ -n "$code" ]]; then
+      echo -n "$code" | pbcopy
+      echo "✅ Code for $account copied to clipboard: $code"
+    else
+      echo "❌ Error generating code for $account"
+    fi
+  fi
+}
+
+_mfa_completion() {
+  local -a subcommands
+  subcommands=(
+    'ls:List all accounts'
+    'list:List all accounts'
+    'add:Add new account (name secret)'
+    'rm:Remove account'
+    'remove:Remove account'
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe -t subcommands 'mfa subcommand/account' subcommands
+    local -a accounts
+    accounts=($(mfa ls 2>/dev/null | awk 'NR>2 {print $1}'))
+    _describe -t accounts 'mfa accounts' accounts
+  elif (( CURRENT == 3 )); then
+    case $words[2] in
+      rm|remove)
+        local -a accounts
+        accounts=($(mfa ls 2>/dev/null | awk 'NR>2 {print $1}'))
+        _describe -t accounts 'mfa accounts' accounts
+        ;;
+    esac
+  fi
+}
+
+compdef _mfa_completion mfa

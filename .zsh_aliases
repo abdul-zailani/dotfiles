@@ -81,4 +81,4 @@ alias installupdates="sudo softwareupdate -i -a"
 alias pingtest="ping -c 5 8.8.8.8"
 
 # ----------[ Shorthand ]----------
-alias m="mfa"
+# Add your personal shorthand aliases in ~/.zshrc.local
