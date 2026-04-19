@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-setup:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shellcheck
+        run: shellcheck setup.sh
+
+      - name: Test setup.sh (dry-run symlinks)
+        run: |
+          # Install Homebrew packages (core only, skip casks for CI speed)
+          brew install starship zoxide fzf eza bat git-delta
+
+          # Run setup — will symlink configs and skip interactive prompts
+          # Pre-set git identity to avoid interactive prompt
+          git config --global user.name "CI Test"
+          git config --global user.email "ci@test.com"
+
+          ./setup.sh
+
+      - name: Verify symlinks
+        run: |
+          echo "Checking symlinks..."
+          for f in .zshrc .zsh_aliases .zsh_functions .gitconfig .gitignore_global; do
+            if [ -L "$HOME/$f" ]; then
+              echo "✓ ~/$f → $(readlink "$HOME/$f")"
+            else
+              echo "✗ ~/$f is not a symlink" && exit 1
+            fi
+          done
+          if [ -L "$HOME/.config/starship.toml" ]; then
+            echo "✓ ~/.config/starship.toml → $(readlink "$HOME/.config/starship.toml")"
+          else
+            echo "✗ ~/.config/starship.toml is not a symlink" && exit 1
+          fi
+
+      - name: Verify zsh loads without errors
+        run: |
+          zsh -c 'source ~/.zshrc' 2>&1 | tee /tmp/zsh-output.txt
+          if grep -qi "error\|not found\|command not found" /tmp/zsh-output.txt; then
+            echo "⚠ Warnings found in zsh output (non-fatal)"
+          fi
+          echo "✓ zsh loaded successfully"

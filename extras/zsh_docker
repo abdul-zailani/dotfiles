@@ -1,0 +1,79 @@
+# extras/zsh_docker — Docker Workflow Helpers
+# Source this file or symlink to ~/.zsh_docker
+#
+# Usage:
+#   dsh nginx         — exec into running container (fuzzy if no arg)
+#   dlog              — fuzzy-select container and tail logs
+#   dip nginx         — show container IP address
+#   dports            — show all container port mappings
+#   dsize             — show Docker disk usage summary
+
+# ── Interactive Shell ────────────────────────
+dsh() {
+  if ! command -v docker &>/dev/null; then
+    echo "❌ docker not installed"; return 1
+  fi
+
+  local container
+  if [[ -n "$1" ]]; then
+    container=$(docker ps --format '{{.Names}}' | grep -i "$1" | head -1)
+    [[ -z "$container" ]] && { echo "❌ No running container matching '$1'"; return 1; }
+  elif command -v fzf &>/dev/null; then
+    container=$(docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | tail -n +2 | fzf --height 15 --reverse --prompt="🐳 Container: " | awk '{print $1}')
+    [[ -z "$container" ]] && return 0
+  else
+    echo "Running containers:"
+    docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+    echo "\nUsage: dsh <container-name>"
+    return 0
+  fi
+
+  # Try bash first, fall back to sh
+  docker exec -it "$container" bash 2>/dev/null || docker exec -it "$container" sh
+}
+
+# ── Interactive Log Viewer ───────────────────
+dlog() {
+  if ! command -v docker &>/dev/null; then
+    echo "❌ docker not installed"; return 1
+  fi
+
+  local container
+  if [[ -n "$1" ]]; then
+    container=$(docker ps -a --format '{{.Names}}' | grep -i "$1" | head -1)
+    [[ -z "$container" ]] && { echo "❌ No container matching '$1'"; return 1; }
+  elif command -v fzf &>/dev/null; then
+    container=$(docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | tail -n +2 | fzf --height 15 --reverse --prompt="📋 Logs for: " | awk '{print $1}')
+    [[ -z "$container" ]] && return 0
+  else
+    echo "Usage: dlog <container-name>"
+    return 0
+  fi
+
+  docker logs -f --tail 100 "$container"
+}
+
+# ── Container IP Address ─────────────────────
+dip() {
+  if [[ -z "$1" ]]; then
+    # Show all container IPs
+    docker ps --format '{{.Names}}' | while read -r name; do
+      local ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$name" 2>/dev/null)
+      printf "  %-30s %s\n" "$name" "${ip:-no IP}"
+    done
+  else
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$1" 2>/dev/null || echo "❌ Container '$1' not found"
+  fi
+}
+
+# ── Port Mappings ────────────────────────────
+dports() {
+  docker ps --format 'table {{.Names}}\t{{.Ports}}' | head -20
+}
+
+# ── Disk Usage ───────────────────────────────
+dsize() {
+  echo "🐳 Docker Disk Usage"
+  echo "────────────────────"
+  docker system df
+}

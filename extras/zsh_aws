@@ -1,0 +1,79 @@
+# extras/zsh_aws — AWS Profile Switcher
+# Source this file or symlink to ~/.zsh_aws
+#
+# Usage:
+#   awsp              — fuzzy-select AWS profile (requires fzf)
+#   awsp staging      — switch to "staging" profile directly
+#   awswho            — show current identity (sts get-caller-identity)
+#   awsregion         — fuzzy-select AWS region
+#   awsregion us-west-2 — switch region directly
+
+# ── AWS Profile Switcher ─────────────────────
+awsp() {
+  if ! command -v aws &>/dev/null; then
+    echo "❌ aws CLI not installed"; return 1
+  fi
+
+  local profiles profile
+  profiles=$(aws configure list-profiles 2>/dev/null)
+  [[ -z "$profiles" ]] && { echo "No AWS profiles found in ~/.aws/config"; return 1; }
+
+  if [[ -n "$1" ]]; then
+    if echo "$profiles" | grep -qx "$1"; then
+      export AWS_PROFILE="$1"
+      echo "☁️  AWS_PROFILE=$AWS_PROFILE"
+    else
+      echo "❌ Profile '$1' not found. Available: $(echo $profiles | tr '\n' ', ')"
+      return 1
+    fi
+  elif command -v fzf &>/dev/null; then
+    profile=$(echo "$profiles" | fzf --height 15 --reverse --prompt="☁️  AWS Profile: " --header="Current: ${AWS_PROFILE:-default}")
+    [[ -n "$profile" ]] && export AWS_PROFILE="$profile" && echo "☁️  AWS_PROFILE=$AWS_PROFILE"
+  else
+    echo "Available profiles:"
+    echo "$profiles" | while read -r p; do
+      [[ "$p" == "${AWS_PROFILE:-default}" ]] && echo "  → $p (active)" || echo "    $p"
+    done
+    echo "\nUsage: awsp <profile-name>"
+  fi
+}
+
+# ── AWS Identity Check ───────────────────────
+awswho() {
+  if ! command -v aws &>/dev/null; then
+    echo "❌ aws CLI not installed"; return 1
+  fi
+  echo "Profile: ${AWS_PROFILE:-default}"
+  echo "Region:  ${AWS_DEFAULT_REGION:-$(aws configure get region 2>/dev/null || echo 'not set')}"
+  aws sts get-caller-identity 2>/dev/null || echo "❌ Not authenticated (run 'aws sso login' or check credentials)"
+}
+
+# ── AWS Region Switcher ──────────────────────
+awsregion() {
+  local regions=(
+    us-east-1 us-east-2 us-west-1 us-west-2
+    eu-west-1 eu-west-2 eu-west-3 eu-central-1 eu-north-1
+    ap-southeast-1 ap-southeast-2 ap-northeast-1 ap-northeast-2 ap-south-1
+    sa-east-1 ca-central-1 me-south-1 af-south-1
+  )
+
+  if [[ -n "$1" ]]; then
+    export AWS_DEFAULT_REGION="$1"
+    echo "🌍 AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"
+  elif command -v fzf &>/dev/null; then
+    local region
+    region=$(printf '%s\n' "${regions[@]}" | fzf --height 15 --reverse --prompt="🌍 AWS Region: " --header="Current: ${AWS_DEFAULT_REGION:-not set}")
+    [[ -n "$region" ]] && export AWS_DEFAULT_REGION="$region" && echo "🌍 AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"
+  else
+    echo "Current: ${AWS_DEFAULT_REGION:-not set}"
+    echo "Usage: awsregion <region>"
+  fi
+}
+
+# ── Zsh Completion ───────────────────────────
+_awsp_completion() {
+  local -a profiles
+  profiles=($(aws configure list-profiles 2>/dev/null))
+  _describe 'AWS profiles' profiles
+}
+compdef _awsp_completion awsp

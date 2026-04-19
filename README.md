@@ -7,6 +7,7 @@ Opinionated zsh config with [Catppuccin Macchiato](https://github.com/catppuccin
 ![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
 ![Zsh](https://img.shields.io/badge/Zsh-F15A24?style=flat&logo=zsh&logoColor=white)
 ![Catppuccin](https://img.shields.io/badge/theme-Catppuccin%20Macchiato-b7bdf8?style=flat)
+![CI](https://img.shields.io/github/actions/workflow/status/abdul-zailani/dotfiles/ci.yml?label=CI&logo=github)
 ![License](https://img.shields.io/github/license/abdul-zailani/dotfiles)
 
 <p align="center">
@@ -21,7 +22,8 @@ Most dotfile repos are either too minimal or too personal to reuse. This one is 
 
 - **Instantly usable** — `./setup.sh` and you're done
 - **Non-destructive** — existing configs are backed up automatically
-- **Extensible** — personal overrides go in `~/.zshrc.local` (gitignored)
+- **CI-tested** — setup.sh is validated on every push via GitHub Actions
+- **Extensible** — opt-in modules in `extras/`, personal overrides in `~/.zshrc.local`
 - **macOS-native** — Apple Silicon + Intel, Homebrew auto-detected
 
 ## ⚡ Quick Start
@@ -38,7 +40,6 @@ What `setup.sh` does:
 3. Symlinks configs to `$HOME` (backs up existing files)
 4. Prompts for Git identity (first run only)
 5. Creates `~/.zshrc.local` for machine-specific overrides
-6. Optionally enables MFA/TOTP tools
 
 ## 📦 What's Included
 
@@ -52,7 +53,10 @@ What `setup.sh` does:
 ├── starship.toml       # Starship prompt — Catppuccin Macchiato
 ├── Brewfile            # Homebrew packages
 ├── extras/             # Optional modules (opt-in)
-│   └── zsh_mfa         # MFA/TOTP via macOS Keychain
+│   ├── zsh_mfa         # MFA/TOTP via macOS Keychain
+│   ├── zsh_aws         # AWS profile & region switcher
+│   └── zsh_docker      # Docker workflow helpers
+├── .github/workflows/  # CI — tests setup.sh on macOS
 └── setup.sh            # One-command bootstrap
 ```
 
@@ -159,19 +163,25 @@ All tools are optional — if not installed, the config falls back gracefully to
 
 ## 🧩 Optional Extras
 
-Extras are opt-in modules in `extras/`. Enable during `setup.sh` or manually:
+Extras are opt-in modules in `extras/`. Source them in `~/.zshrc.local`:
 
 ```bash
-# Symlink to enable
-ln -sf ~/dotfiles/extras/zsh_mfa ~/.zsh_mfa
-
-# Or copy if you want to customize
-cp ~/dotfiles/extras/zsh_mfa ~/.zsh_mfa
+# ~/.zshrc.local
+source ~/dotfiles/extras/zsh_aws
+source ~/dotfiles/extras/zsh_docker
 ```
 
-| Module | Description | Requires |
-|--------|-------------|----------|
-| `zsh_mfa` | TOTP codes from macOS Keychain — `mfa`, `mfac` (interactive) | `oath-toolkit` |
+Or symlink to enable:
+
+```bash
+ln -sf ~/dotfiles/extras/zsh_mfa ~/.zsh_mfa
+```
+
+| Module | Description | Key Commands |
+|--------|-------------|--------------|
+| `zsh_mfa` | TOTP codes from macOS Keychain | `mfa`, `mfac` (interactive with fzf) |
+| `zsh_aws` | AWS profile & region switcher | `awsp` (fuzzy profile switch), `awswho`, `awsregion` |
+| `zsh_docker` | Docker workflow helpers | `dsh` (exec into container), `dlog`, `dip`, `dports` |
 
 ## 🎨 Customization
 
@@ -184,11 +194,11 @@ All personal config goes in `~/.zshrc.local` (gitignored, created by `setup.sh`)
 export WORK_API_KEY="..."
 alias vpn="sudo openconnect vpn.company.com"
 
-# Editor aliases
-source ~/.cursor/aliases.zsh
+# Enable extras
+source ~/dotfiles/extras/zsh_aws
+source ~/dotfiles/extras/zsh_docker
 
 # Personal shortcuts
-alias m="mfa"
 alias proj="cd ~/work/my-project"
 ```
 
